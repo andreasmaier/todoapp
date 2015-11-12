@@ -8,13 +8,52 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 public class TodoActivity extends AppCompatActivity {
+
+    private ListView todoListView;
+    private ArrayAdapter<String> listAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_todo);
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:3000")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        TodoService todoService = retrofit.create(TodoService.class);
+
+        Call<List<Todo>> todos = todoService.listTodos();
+
+        todos.enqueue(new Callback<List<Todo>>() {
+            @Override
+            public void onResponse(Response<List<Todo>> response, Retrofit retrofit) {
+                listAdapter.add(response.body().get(0).getName());
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                System.err.println("ERROR: " + t.getMessage());
+
+                listAdapter.add("FUCK");
+            }
+        });
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -26,6 +65,23 @@ public class TodoActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        todoListView = (ListView) findViewById(R.id.todoListView);
+
+        String[] planets = new String[]{"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptun"};
+
+        ArrayList<String> planetList = new ArrayList<>();
+        planetList.addAll(Arrays.asList(planets));
+
+        listAdapter = new ArrayAdapter<>(this, R.layout.simplerow, planetList);
+
+        listAdapter.add("Ceres");
+        listAdapter.add("Pluto");
+        listAdapter.add("Haumea");
+        listAdapter.add("Makemake");
+        listAdapter.add("Eris");
+        listAdapter.add("Klotaris");
+        todoListView.setAdapter(listAdapter);
     }
 
     @Override
